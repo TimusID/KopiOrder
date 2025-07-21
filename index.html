@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kopi Order App</title>
+  <meta name="theme-color" content="#795548" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192x192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="KopiPWA">
+  <link rel="apple-touch-icon" href="icon-192x192.png">
+
+
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-coffee px-3 mb-4">
+  <span class="navbar-brand mb-0 h1"><img src="icons/icon-192x192.png" alt="Kopi" width="32" class="me-2" />Warung Kopi</span>
+  <button class="btn btn-outline-light" type="button" onclick="showCart()">
+    <i class="bi bi-cart"></i> Keranjang
+    <span class="badge bg-danger" id="cart-count">0</span>
+  </button>
+</nav>
+
+<div class="container">
+  <div class="row" id="menu"></div>
+</div>
+
+<!-- Modal Keranjang -->
+<div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Keranjang Pesanan</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="cart-items"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-primary" onclick="checkout()">Checkout</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap 5 JS & Icons -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+<script>
+// Data menu kopi
+const coffees = [
+  { id: 1, name: "Espresso", price: 15000 },
+  { id: 2, name: "Cappuccino", price: 20000 },
+  { id: 3, name: "Latte", price: 22000 },
+  { id: 4, name: "Americano", price: 17000 },
+  { id: 5, name: "Kopi Tubruk", price: 10000 }
+];
+
+let cart = [];
+
+function renderMenu() {
+  const menu = document.getElementById("menu");
+  menu.innerHTML = "";
+  coffees.forEach(coffee => {
+    menu.innerHTML += `
+      <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body d-flex flex-column justify-content-between">
+            <h5 class="card-title">${coffee.name}</h5>
+            <p class="card-text text-secondary mb-2">Rp${coffee.price.toLocaleString('id-ID')}</p>
+            <button class="btn btn-coffee mt-auto" onclick="addToCart(${coffee.id})">
+              <i class="bi bi-cart-plus"></i> Pesan
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
+renderMenu();
+
+function addToCart(id) {
+  const item = coffees.find(c => c.id === id);
+  cart.push(item);
+  document.getElementById("cart-count").innerText = cart.length;
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification("Kopi ditambahkan", { body: `${item.name} masuk ke keranjang!` });
+  }
+}
+
+function showCart() {
+  let html = '';
+  if (cart.length === 0) {
+    html = "<p class='text-center'>Keranjang masih kosong!</p>";
+  } else {
+    let total = 0;
+    html = '<ul class="list-group mb-2">';
+    cart.forEach((item, i) => {
+      total += item.price;
+      html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+        ${item.name} <span>Rp${item.price.toLocaleString('id-ID')}</span>
+        <button class="btn btn-sm btn-danger ms-2" onclick="removeFromCart(${i})">&times;</button>
+      </li>`;
+    });
+    html += '</ul>';
+    html += `<div class="fw-bold text-end">Total: Rp${total.toLocaleString('id-ID')}</div>`;
+  }
+  document.getElementById("cart-items").innerHTML = html;
+  new bootstrap.Modal(document.getElementById("cartModal")).show();
+}
+
+function removeFromCart(idx) {
+  cart.splice(idx, 1);
+  document.getElementById("cart-count").innerText = cart.length;
+  showCart();
+}
+
+function checkout() {
+  alert("Terima kasih, pesanan Anda telah diproses!");
+  cart = [];
+  document.getElementById("cart-count").innerText = "0";
+  bootstrap.Modal.getInstance(document.getElementById("cartModal")).hide();
+}
+
+// Notification PWA
+if ('Notification' in window && Notification.permission !== 'granted') {
+  Notification.requestPermission();
+}
+
+// PWA Service Worker Register
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js');
+}
+</script>
+
+<style>
+body {
+  background: #f9f7f4;
+}
+.bg-coffee {
+  background: #795548;
+}
+.btn-coffee {
+  background: #795548;
+  color: #fff;
+}
+.btn-coffee:hover {
+  background: #a1887f;
+}
+.card-title { font-weight: bold; }
+</style>
+</body>
+</html>
